@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#09090d">
+<title>IGRIS — NEET Command Center</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="top-live-banner" id="topFocusBanner" hidden>
+  <div class="top-live-left">
+    <span class="pulse"></span>
+    <span id="topFocusText">FOCUS TIMER RUNNING</span>
+  </div>
+  <div class="top-live-actions">
+    <button type="button" class="btn secondary" style="padding:4px 9px;font-size:10px" onclick="navigate('focus')">Open Timer</button>
+    <button type="button" class="icon-btn" style="padding:3px 7px;font-size:11px" onclick="hideTopFocusBanner()" title="Hide bar">×</button>
+  </div>
+</div>
+
+<div class="reminder-alert-bar" id="reminderAlertBar" hidden>
+  <div>
+    <b id="reminderAlertTitle">MISSION REMINDER</b>
+    <div id="reminderAlertBody" class="muted"></div>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn" style="padding:6px 10px" id="reminderOpenBtn">Open Missions</button>
+    <button type="button" class="btn secondary" style="padding:6px 10px" onclick="dismissReminderAlert()">Dismiss</button>
+  </div>
+</div>
+
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="brand-mark" title="IGRIS">⚔</div><div><b>IGRIS 💙</b><small>NEET COMMAND CENTER</small></div></div>
+    <div class="side-label">COMMAND</div>
+    <button class="nav active" data-view="dashboard">⌂ <span>Dashboard</span></button>
+    <button class="nav" data-view="missions">⚔ <span>Daily Missions</span></button>
+    <button class="nav" data-view="subjects">▤ <span>Subject HQ</span></button>
+    <button class="nav" data-view="focus">◷ <span>Focus Room</span></button>
+    <button class="nav" data-view="practice">🩺 <span>Practice &amp; Quiz</span></button>
+    <button class="nav" data-view="mistakes">✧ <span>Mistake Hunter</span></button>
+    <button class="nav" data-view="revision">↻ <span>Revision Log</span></button>
+    <button class="nav" data-view="tests">▥ <span>Mock Tests</span></button>
+    <button class="nav" data-view="mocklab">⊕ <span>Mock Lab</span></button>
+    <button class="nav" data-view="vault">🗂 <span>Study Vault</span></button>
+    <button class="nav" data-view="aitutor">✦ <span>AI Tutor</span></button>
+    <button class="nav" data-view="analytics">📈 <span>Analytics</span></button>
+    <div class="sidebar-bottom"><div class="system-status"><span class="pulse"></span> LOCAL SYSTEM ONLINE</div><small>𓆩⚔️𓆪 IGRIS 💙 • NEET 2027</small></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <button class="mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
+      <div><div class="eyebrow" id="todayLabel">YOUR TRAINING GROUND</div><div class="top-title" id="viewTitle">Dashboard</div></div>
+      <div class="top-actions">
+        <span class="date-chip" id="dateChip"></span>
+        <button class="icon-btn" id="zenBtn" title="Toggle Full View">⛶</button>
+        <button class="icon-btn" id="importBtn" title="Import backup">⇩</button>
+        <button class="icon-btn" id="exportBtn" title="Export backup">⇧</button>
+      </div>
+    </header>
+    <section id="view" class="view"></section>
+    <footer>IGRIS SYSTEM <span>•</span> Progress over perfection. Keep moving.</footer>
+  </main>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal-overlay" id="previewModal" onclick="if(event.target===this)closePreview()">
+  <div class="modal-card">
+    <div class="modal-head">
+      <b id="previewTitle">Preview</b>
+      <button type="button" class="icon-btn" onclick="closePreview()">×</button>
+    </div>
+    <div class="modal-body" id="previewBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept="application/json" hidden>
+<script src="app.js"></script>
+  <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+  </script>
+</body>
+</html>

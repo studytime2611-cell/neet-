@@ -1,0 +1,298 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "IGRIS NEET aspirant profile and command center settings. Clients must submit FieldValue.serverTimestamp() for createdAt and updatedAt.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "currentRank": { "type": "string" },
+        "upcomingRank": { "type": "string" },
+        "examDate": { "type": "string" },
+        "examDateSet": { "type": "boolean" },
+        "mockTarget": { "type": "integer" },
+        "syllabusLoaded": { "type": "boolean" },
+        "lastRevAlert": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "currentRank", "upcomingRank", "examDate", "examDateSet", "mockTarget", "syllabusLoaded", "createdAt", "updatedAt"]
+    },
+    "MissionTask": {
+      "title": "MissionTask",
+      "description": "Daily mission task grouped by subject and mission type.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "text": { "type": "string" },
+        "subject": { "type": "string" },
+        "missionType": { "type": "string", "enum": ["Practice", "Revision", "Lecture"] },
+        "done": { "type": "boolean" },
+        "doneAt": { "type": "string" },
+        "focusMins": { "type": "integer" },
+        "reminderAt": { "type": "string" },
+        "reminded": { "type": "boolean" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "text", "subject", "missionType", "done", "createdAt", "updatedAt"]
+    },
+    "SubjectChapter": {
+      "title": "SubjectChapter",
+      "description": "Subject HQ chapter entry with strength level, weak topics, and completion ticks.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "branch": { "type": "string" },
+        "name": { "type": "string" },
+        "done": { "type": "boolean" },
+        "strength": { "type": "string", "enum": ["Weak", "Medium", "Strong"] },
+        "weakTopics": { "type": "string" },
+        "ticks": { "type": "object" },
+        "sortOrder": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "name", "done", "strength", "weakTopics", "ticks", "sortOrder", "createdAt", "updatedAt"]
+    },
+    "FocusSession": {
+      "title": "FocusSession",
+      "description": "Logged study/focus timer session.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "subject": { "type": "string" },
+        "minutes": { "type": "integer" },
+        "questions": { "type": "integer" },
+        "topic": { "type": "string" },
+        "missionId": { "type": "string" },
+        "plannedMins": { "type": "integer" },
+        "seconds": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "subject", "minutes", "questions", "topic", "createdAt", "updatedAt"]
+    },
+    "MistakeEntry": {
+      "title": "MistakeEntry",
+      "description": "Mistake Hunter entry with fix loop streak and optional local attachment metadata.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "subject": { "type": "string" },
+        "type": { "type": "string" },
+        "chapter": { "type": "string" },
+        "error": { "type": "string" },
+        "fix": { "type": "string" },
+        "closed": { "type": "boolean" },
+        "closedAt": { "type": "string" },
+        "fixStreak": { "type": "integer" },
+        "localFilePath": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "subject", "type", "chapter", "error", "fix", "closed", "fixStreak", "createdAt", "updatedAt"]
+    },
+    "RevisionEntry": {
+      "title": "RevisionEntry",
+      "description": "Spaced repetition log entry (+3d, +7d, +21d).",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "r3": { "type": "string" },
+        "r7": { "type": "string" },
+        "r21": { "type": "string" },
+        "chapter": { "type": "string" },
+        "subject": { "type": "string" },
+        "kind": { "type": "string" },
+        "lastRevised": { "type": "string" },
+        "milestoneR3": { "type": "string" },
+        "milestoneR7": { "type": "string" },
+        "milestoneR21": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "r3", "r7", "r21", "chapter", "subject", "kind", "createdAt", "updatedAt"]
+    },
+    "MockTestEntry": {
+      "title": "MockTestEntry",
+      "description": "Recorded full or part mock test score and P/C/B split.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "name": { "type": "string" },
+        "score": { "type": "integer" },
+        "accuracy": { "type": "integer" },
+        "physics": { "type": "integer" },
+        "chemistry": { "type": "integer" },
+        "biology": { "type": "integer" },
+        "analysis": { "type": "string" },
+        "analysisDone": { "type": "boolean" },
+        "localFilePath": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "name", "score", "accuracy", "physics", "chemistry", "biology", "analysis", "analysisDone", "createdAt", "updatedAt"]
+    },
+    "UpcomingTestEntry": {
+      "title": "UpcomingTestEntry",
+      "description": "Scheduled upcoming mock test with syllabus text and optional attachment.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "syllabus": { "type": "string" },
+        "localFilePath": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "date", "time", "syllabus", "createdAt", "updatedAt"]
+    },
+    "MockLabPaper": {
+      "title": "MockLabPaper",
+      "description": "Detailed 4-subject Mock Lab paper breakdown (45Q each).",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "date": { "type": "string" },
+        "physicsC": { "type": "integer" },
+        "physicsW": { "type": "integer" },
+        "chemistryC": { "type": "integer" },
+        "chemistryW": { "type": "integer" },
+        "botanyC": { "type": "integer" },
+        "botanyW": { "type": "integer" },
+        "zoologyC": { "type": "integer" },
+        "zoologyW": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "date", "physicsC", "physicsW", "chemistryC", "chemistryW", "botanyC", "botanyW", "zoologyC", "zoologyW", "createdAt", "updatedAt"]
+    },
+    "VaultEntry": {
+      "title": "VaultEntry",
+      "description": "Study Vault material reference with optional Drive link and local file metadata.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "chapter": { "type": "string" },
+        "category": { "type": "string" },
+        "localFilePath": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "title", "subject", "chapter", "category", "createdAt", "updatedAt"]
+    },
+    "QuizQuestion": {
+      "title": "QuizQuestion",
+      "description": "MCQ question stored in user practice bank.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "subject": { "type": "string" },
+        "chapter": { "type": "string" },
+        "q": { "type": "string" },
+        "opts": { "type": "array" },
+        "ans": { "type": "integer" },
+        "mark": { "type": "string", "enum": ["Imp", "Easy", "Medium", "Hard"] },
+        "exp": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "subject", "chapter", "q", "opts", "ans", "mark", "exp", "createdAt", "updatedAt"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Completed MCQ quiz attempt summary.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "subject": { "type": "string" },
+        "chapter": { "type": "string" },
+        "score": { "type": "integer" },
+        "total": { "type": "integer" },
+        "accuracy": { "type": "integer" },
+        "elapsedSec": { "type": "integer" },
+        "avgSec": { "type": "integer" },
+        "wrongItemsJson": { "type": "string" },
+        "marksSummaryJson": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "date", "subject", "chapter", "score", "total", "accuracy", "elapsedSec", "avgSec", "wrongItemsJson", "marksSummaryJson", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User settings and rank targets."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/MissionTask" },
+      "description": "Daily mission tasks."
+    },
+    "/users/{userId}/chapters/{chapterId}": {
+      "schema": { "$ref": "#/entities/SubjectChapter" },
+      "description": "Subject HQ chapter progress and strength matrix."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/FocusSession" },
+      "description": "Logged focus study sessions."
+    },
+    "/users/{userId}/mistakes/{mistakeId}": {
+      "schema": { "$ref": "#/entities/MistakeEntry" },
+      "description": "Mistake Hunter entries."
+    },
+    "/users/{userId}/revisions/{revisionId}": {
+      "schema": { "$ref": "#/entities/RevisionEntry" },
+      "description": "Spaced repetition revision logs."
+    },
+    "/users/{userId}/tests/{testId}": {
+      "schema": { "$ref": "#/entities/MockTestEntry" },
+      "description": "Recorded mock tests."
+    },
+    "/users/{userId}/upcomingTests/{upcomingId}": {
+      "schema": { "$ref": "#/entities/UpcomingTestEntry" },
+      "description": "Scheduled upcoming mock tests."
+    },
+    "/users/{userId}/mockLabs/{labId}": {
+      "schema": { "$ref": "#/entities/MockLabPaper" },
+      "description": "Detailed 4-subject Mock Lab papers."
+    },
+    "/users/{userId}/vault/{vaultId}": {
+      "schema": { "$ref": "#/entities/VaultEntry" },
+      "description": "Study Vault metadata."
+    },
+    "/users/{userId}/quizzes/{quizId}": {
+      "schema": { "$ref": "#/entities/QuizQuestion" },
+      "description": "MCQ question bank."
+    },
+    "/users/{userId}/quizAttempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttempt" },
+      "description": "Saved MCQ quiz attempts."
+    }
+  }
+}

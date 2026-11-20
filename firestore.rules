@@ -1,0 +1,412 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function hasValidCreateTimestamps(data) {
+      return data.createdAt is timestamp &&
+             data.createdAt <= request.time &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function hasValidUpdateTimestamps(data, oldData) {
+      return data.createdAt == oldData.createdAt &&
+             data.updatedAt is timestamp &&
+             data.updatedAt <= request.time;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.currentRank is string && data.currentRank.size() <= 40 &&
+             data.upcomingRank is string && data.upcomingRank.size() <= 40 &&
+             data.examDate is string && data.examDate.size() <= 20 &&
+             data.examDateSet is bool &&
+             data.mockTarget is int && data.mockTarget >= 0 && data.mockTarget <= 720 &&
+             data.syllabusLoaded is bool &&
+             (!('lastRevAlert' in data) || (data.lastRevAlert is string && data.lastRevAlert.size() <= 20));
+    }
+
+    function isValidMissionTask(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.text is string && data.text.size() >= 1 && data.text.size() <= 400 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             data.missionType in ['Practice', 'Revision', 'Lecture'] &&
+             data.done is bool &&
+             (!('doneAt' in data) || (data.doneAt is string && data.doneAt.size() <= 20)) &&
+             (!('focusMins' in data) || (data.focusMins is int && data.focusMins >= 0 && data.focusMins <= 720)) &&
+             (!('reminderAt' in data) || (data.reminderAt is string && data.reminderAt.size() <= 32)) &&
+             (!('reminded' in data) || data.reminded is bool) &&
+             (!('source' in data) || (data.source is string && data.source.size() <= 40));
+    }
+
+    function isValidSubjectChapter(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             (!('branch' in data) || (data.branch is string && data.branch.size() <= 40)) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+             data.done is bool &&
+             data.strength in ['Weak', 'Medium', 'Strong'] &&
+             data.weakTopics is string && data.weakTopics.size() <= 500 &&
+             data.ticks is map && data.ticks.size() <= 20 &&
+             data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 10000;
+    }
+
+    function isValidFocusSession(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 60 &&
+             data.minutes is int && data.minutes >= 0 && data.minutes <= 1440 &&
+             data.questions is int && data.questions >= 0 && data.questions <= 2000 &&
+             data.topic is string && data.topic.size() <= 400 &&
+             (!('missionId' in data) || (data.missionId is string && data.missionId.size() <= 128)) &&
+             (!('plannedMins' in data) || (data.plannedMins is int && data.plannedMins >= 0 && data.plannedMins <= 720)) &&
+             (!('seconds' in data) || (data.seconds is int && data.seconds >= 0 && data.seconds <= 86400));
+    }
+
+    function isValidMistakeEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             data.type is string && data.type.size() >= 1 && data.type.size() <= 60 &&
+             data.chapter is string && data.chapter.size() >= 1 && data.chapter.size() <= 200 &&
+             data.error is string && data.error.size() >= 1 && data.error.size() <= 2000 &&
+             data.fix is string && data.fix.size() <= 2000 &&
+             data.closed is bool &&
+             (!('closedAt' in data) || (data.closedAt is string && data.closedAt.size() <= 20)) &&
+             data.fixStreak is int && data.fixStreak >= 0 && data.fixStreak <= 100 &&
+             (!('localFilePath' in data) || (data.localFilePath is string && data.localFilePath.size() <= 500)) &&
+             (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 255)) &&
+             (!('fileType' in data) || (data.fileType is string && data.fileType.size() <= 100));
+    }
+
+    function isValidRevisionEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.r3 is string && data.r3.size() <= 20 &&
+             data.r7 is string && data.r7.size() <= 20 &&
+             data.r21 is string && data.r21.size() <= 20 &&
+             data.chapter is string && data.chapter.size() >= 1 && data.chapter.size() <= 200 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             data.kind is string && data.kind.size() >= 1 && data.kind.size() <= 60 &&
+             (!('lastRevised' in data) || (data.lastRevised is string && data.lastRevised.size() <= 20)) &&
+             (!('milestoneR3' in data) || (data.milestoneR3 is string && data.milestoneR3.size() <= 20)) &&
+             (!('milestoneR7' in data) || (data.milestoneR7 is string && data.milestoneR7.size() <= 20)) &&
+             (!('milestoneR21' in data) || (data.milestoneR21 is string && data.milestoneR21.size() <= 20));
+    }
+
+    function isValidMockTestEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+             data.score is int && data.score >= 0 && data.score <= 720 &&
+             data.accuracy is int && data.accuracy >= 0 && data.accuracy <= 100 &&
+             data.physics is int && data.physics >= 0 && data.physics <= 180 &&
+             data.chemistry is int && data.chemistry >= 0 && data.chemistry <= 180 &&
+             data.biology is int && data.biology >= 0 && data.biology <= 360 &&
+             data.analysis is string && data.analysis.size() <= 2000 &&
+             data.analysisDone is bool &&
+             (!('localFilePath' in data) || (data.localFilePath is string && data.localFilePath.size() <= 500)) &&
+             (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 255)) &&
+             (!('fileType' in data) || (data.fileType is string && data.fileType.size() <= 100));
+    }
+
+    function isValidUpcomingTestEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.time is string && data.time.size() <= 20 &&
+             data.syllabus is string && data.syllabus.size() <= 2000 &&
+             (!('localFilePath' in data) || (data.localFilePath is string && data.localFilePath.size() <= 500)) &&
+             (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 255)) &&
+             (!('fileType' in data) || (data.fileType is string && data.fileType.size() <= 100));
+    }
+
+    function isValidMockLabPaper(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 200 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.physicsC is int && data.physicsC >= 0 && data.physicsC <= 45 &&
+             data.physicsW is int && data.physicsW >= 0 && data.physicsW <= 45 &&
+             (data.physicsC + data.physicsW) <= 45 &&
+             data.chemistryC is int && data.chemistryC >= 0 && data.chemistryC <= 45 &&
+             data.chemistryW is int && data.chemistryW >= 0 && data.chemistryW <= 45 &&
+             (data.chemistryC + data.chemistryW) <= 45 &&
+             data.botanyC is int && data.botanyC >= 0 && data.botanyC <= 45 &&
+             data.botanyW is int && data.botanyW >= 0 && data.botanyW <= 45 &&
+             (data.botanyC + data.botanyW) <= 45 &&
+             data.zoologyC is int && data.zoologyC >= 0 && data.zoologyC <= 45 &&
+             data.zoologyW is int && data.zoologyW >= 0 && data.zoologyW <= 45 &&
+             (data.zoologyC + data.zoologyW) <= 45;
+    }
+
+    function isValidVaultEntry(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             data.chapter is string && data.chapter.size() <= 200 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             (!('localFilePath' in data) || (data.localFilePath is string && data.localFilePath.size() <= 500)) &&
+             (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 255)) &&
+             (!('fileType' in data) || (data.fileType is string && data.fileType.size() <= 100)) &&
+             (!('link' in data) || (data.link is string && data.link.size() <= 1000));
+    }
+
+    function isValidQuizQuestion(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             data.chapter is string && data.chapter.size() >= 1 && data.chapter.size() <= 200 &&
+             data.q is string && data.q.size() >= 1 && data.q.size() <= 3000 &&
+             data.opts is list && data.opts.size() >= 2 && data.opts.size() <= 6 &&
+             data.opts[0] is string &&
+             data.ans is int && data.ans >= 0 && data.ans < data.opts.size() &&
+             data.mark in ['Imp', 'Easy', 'Medium', 'Hard'] &&
+             data.exp is string && data.exp.size() <= 3000;
+    }
+
+    function isValidQuizAttempt(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.date is string && data.date.size() >= 1 && data.date.size() <= 20 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 40 &&
+             data.chapter is string && data.chapter.size() >= 1 && data.chapter.size() <= 200 &&
+             data.score is int && data.score >= 0 && data.score <= 500 &&
+             data.total is int && data.total >= 1 && data.total <= 500 &&
+             data.accuracy is int && data.accuracy >= 0 && data.accuracy <= 100 &&
+             data.elapsedSec is int && data.elapsedSec >= 0 && data.elapsedSec <= 86400 &&
+             data.avgSec is int && data.avgSec >= 0 && data.avgSec <= 86400 &&
+             data.wrongItemsJson is string && data.wrongItemsJson.size() <= 100000 &&
+             data.marksSummaryJson is string && data.marksSummaryJson.size() <= 50000;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'name', 'currentRank', 'upcomingRank', 'examDate', 'examDateSet', 'mockTarget', 'syllabusLoaded', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'name', 'currentRank', 'upcomingRank', 'examDate', 'examDateSet', 'mockTarget', 'syllabusLoaded', 'lastRevAlert', 'createdAt', 'updatedAt']) &&
+                       hasValidCreateTimestamps(incoming()) &&
+                       isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       hasValidUpdateTimestamps(incoming(), existing()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'currentRank', 'upcomingRank', 'examDate', 'examDateSet', 'mockTarget', 'syllabusLoaded', 'lastRevAlert', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(taskId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(taskId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'text', 'subject', 'missionType', 'done', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'text', 'subject', 'missionType', 'done', 'doneAt', 'focusMins', 'reminderAt', 'reminded', 'source', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidMissionTask(incoming());
+        allow update: if isOwner(userId) && isValidId(taskId) &&
+                         isValidMissionTask(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['date', 'text', 'subject', 'missionType', 'done', 'doneAt', 'focusMins', 'reminderAt', 'reminded', 'source', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(taskId);
+      }
+
+      match /chapters/{chapterId} {
+        allow get: if isOwner(userId) && isValidId(chapterId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(chapterId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'subject', 'name', 'done', 'strength', 'weakTopics', 'ticks', 'sortOrder', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subject', 'branch', 'name', 'done', 'strength', 'weakTopics', 'ticks', 'sortOrder', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidSubjectChapter(incoming());
+        allow update: if isOwner(userId) && isValidId(chapterId) &&
+                         isValidSubjectChapter(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['subject', 'branch', 'name', 'done', 'strength', 'weakTopics', 'ticks', 'sortOrder', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(chapterId);
+      }
+
+      match /sessions/{sessionId} {
+        allow get: if isOwner(userId) && isValidId(sessionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(sessionId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'subject', 'minutes', 'questions', 'topic', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'subject', 'minutes', 'questions', 'topic', 'missionId', 'plannedMins', 'seconds', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidFocusSession(incoming());
+        allow update: if isOwner(userId) && isValidId(sessionId) &&
+                         isValidFocusSession(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['date', 'subject', 'minutes', 'questions', 'topic', 'missionId', 'plannedMins', 'seconds', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+      }
+
+      match /mistakes/{mistakeId} {
+        allow get: if isOwner(userId) && isValidId(mistakeId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(mistakeId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'subject', 'type', 'chapter', 'error', 'fix', 'closed', 'fixStreak', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'subject', 'type', 'chapter', 'error', 'fix', 'closed', 'closedAt', 'fixStreak', 'localFilePath', 'fileName', 'fileType', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidMistakeEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(mistakeId) &&
+                         isValidMistakeEntry(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['date', 'subject', 'type', 'chapter', 'error', 'fix', 'closed', 'closedAt', 'fixStreak', 'localFilePath', 'fileName', 'fileType', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(mistakeId);
+      }
+
+      match /revisions/{revisionId} {
+        allow get: if isOwner(userId) && isValidId(revisionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(revisionId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'r3', 'r7', 'r21', 'chapter', 'subject', 'kind', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'r3', 'r7', 'r21', 'chapter', 'subject', 'kind', 'lastRevised', 'milestoneR3', 'milestoneR7', 'milestoneR21', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidRevisionEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(revisionId) &&
+                         isValidRevisionEntry(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['lastRevised', 'milestoneR3', 'milestoneR7', 'milestoneR21', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(revisionId);
+      }
+
+      match /tests/{testId} {
+        allow get: if isOwner(userId) && isValidId(testId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(testId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'name', 'score', 'accuracy', 'physics', 'chemistry', 'biology', 'analysis', 'analysisDone', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'name', 'score', 'accuracy', 'physics', 'chemistry', 'biology', 'analysis', 'analysisDone', 'localFilePath', 'fileName', 'fileType', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidMockTestEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(testId) &&
+                         isValidMockTestEntry(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'score', 'accuracy', 'physics', 'chemistry', 'biology', 'analysis', 'analysisDone', 'localFilePath', 'fileName', 'fileType', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(testId);
+      }
+
+      match /upcomingTests/{upcomingId} {
+        allow get: if isOwner(userId) && isValidId(upcomingId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(upcomingId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'name', 'date', 'time', 'syllabus', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'date', 'time', 'syllabus', 'localFilePath', 'fileName', 'fileType', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidUpcomingTestEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(upcomingId) &&
+                         isValidUpcomingTestEntry(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'date', 'time', 'syllabus', 'localFilePath', 'fileName', 'fileType', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(upcomingId);
+      }
+
+      match /mockLabs/{labId} {
+        allow get: if isOwner(userId) && isValidId(labId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(labId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'name', 'date', 'physicsC', 'physicsW', 'chemistryC', 'chemistryW', 'botanyC', 'botanyW', 'zoologyC', 'zoologyW', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'name', 'date', 'physicsC', 'physicsW', 'chemistryC', 'chemistryW', 'botanyC', 'botanyW', 'zoologyC', 'zoologyW', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidMockLabPaper(incoming());
+        allow update: if isOwner(userId) && isValidId(labId) &&
+                         isValidMockLabPaper(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'date', 'physicsC', 'physicsW', 'chemistryC', 'chemistryW', 'botanyC', 'botanyW', 'zoologyC', 'zoologyW', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(labId);
+      }
+
+      match /vault/{vaultId} {
+        allow get: if isOwner(userId) && isValidId(vaultId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(vaultId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'title', 'subject', 'chapter', 'category', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'title', 'subject', 'chapter', 'category', 'localFilePath', 'fileName', 'fileType', 'link', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidVaultEntry(incoming());
+        allow update: if isOwner(userId) && isValidId(vaultId) &&
+                         isValidVaultEntry(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'subject', 'chapter', 'category', 'localFilePath', 'fileName', 'fileType', 'link', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(vaultId);
+      }
+
+      match /quizzes/{quizId} {
+        allow get: if isOwner(userId) && isValidId(quizId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(quizId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'subject', 'chapter', 'q', 'opts', 'ans', 'mark', 'exp', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'subject', 'chapter', 'q', 'opts', 'ans', 'mark', 'exp', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidQuizQuestion(incoming());
+        allow update: if isOwner(userId) && isValidId(quizId) &&
+                         isValidQuizQuestion(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['subject', 'chapter', 'q', 'opts', 'ans', 'mark', 'exp', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(quizId);
+      }
+
+      match /quizAttempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(attemptId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(attemptId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'date', 'subject', 'chapter', 'score', 'total', 'accuracy', 'elapsedSec', 'avgSec', 'wrongItemsJson', 'marksSummaryJson', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'date', 'subject', 'chapter', 'score', 'total', 'accuracy', 'elapsedSec', 'avgSec', 'wrongItemsJson', 'marksSummaryJson', 'createdAt', 'updatedAt']) &&
+                         hasValidCreateTimestamps(incoming()) &&
+                         isValidQuizAttempt(incoming());
+        allow update: if isOwner(userId) && isValidId(attemptId) &&
+                         isValidQuizAttempt(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         hasValidUpdateTimestamps(incoming(), existing()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['wrongItemsJson', 'marksSummaryJson', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(attemptId);
+      }
+    }
+  }
+}

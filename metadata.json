@@ -1,0 +1,6 @@
+{
+  "name": "IGRIS",
+  "description": "NEET 2027 Command Center for daily missions, chapter strength tracker, focus timer, practice quizzes, mistake hunter, mock lab, study vault, and AI tutor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
